@@ -18,6 +18,7 @@ type selectData struct {
 	From              Sqlizer
 	Joins             []Sqlizer
 	WhereParts        []Sqlizer
+	PreWhereParts     []Sqlizer
 	GroupBys          []string
 	HavingParts       []Sqlizer
 	OrderByParts      []Sqlizer
@@ -107,6 +108,14 @@ func (d *selectData) toSql() (sqlStr string, args []interface{}, err error) {
 	if len(d.Joins) > 0 {
 		sql.WriteString(" ")
 		args, err = appendToSql(d.Joins, sql, " ", args)
+		if err != nil {
+			return
+		}
+	}
+
+	if len(d.PreWhereParts) > 0 {
+		sql.WriteString(" PREWHERE ")
+		args, err = appendToSql(d.PreWhereParts, sql, " AND ", args)
 		if err != nil {
 			return
 		}
@@ -339,6 +348,13 @@ func (b SelectBuilder) Where(pred interface{}, args ...interface{}) SelectBuilde
 		return b
 	}
 	return builder.Append(b, "WhereParts", newWherePart(pred, args...)).(SelectBuilder)
+}
+
+func (b SelectBuilder) PreWhere(pred interface{}, args ...interface{}) SelectBuilder {
+	if pred == nil || pred == "" {
+		return b
+	}
+	return builder.Append(b, "PreWhereParts", newWherePart(pred, args...)).(SelectBuilder)
 }
 
 // GroupBy adds GROUP BY expressions to the query.

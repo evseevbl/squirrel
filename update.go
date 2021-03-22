@@ -17,6 +17,7 @@ type updateData struct {
 	Table             string
 	SetClauses        []setClause
 	WhereParts        []Sqlizer
+	PreWhereParts     []Sqlizer
 	OrderBys          []string
 	Limit             string
 	Offset            string
@@ -99,6 +100,14 @@ func (d *updateData) ToSql() (sqlStr string, args []interface{}, err error) {
 		setSqls[i] = fmt.Sprintf("%s = %s", setClause.column, valSql)
 	}
 	sql.WriteString(strings.Join(setSqls, ", "))
+
+	if len(d.PreWhereParts) > 0 {
+		sql.WriteString( " PREWHERE " )
+		args, err = appendToSql(d.PreWhereParts, sql, " AND ", args)
+		if err != nil {
+			return
+		}
+	}
 
 	if len(d.WhereParts) > 0 {
 		sql.WriteString(" WHERE ")
@@ -228,6 +237,10 @@ func (b UpdateBuilder) SetMap(clauses map[string]interface{}) UpdateBuilder {
 // See SelectBuilder.Where for more information.
 func (b UpdateBuilder) Where(pred interface{}, args ...interface{}) UpdateBuilder {
 	return builder.Append(b, "WhereParts", newWherePart(pred, args...)).(UpdateBuilder)
+}
+
+func (b UpdateBuilder) PreWhere(pred interface{}, args ...interface{}) UpdateBuilder {
+	return builder.Append(b, "PreWhereParts", newWherePart(pred, args...)).(UpdateBuilder)
 }
 
 // OrderBy adds ORDER BY expressions to the query.

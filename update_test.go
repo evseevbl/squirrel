@@ -15,7 +15,10 @@ func TestUpdateBuilderToSql(t *testing.T) {
 		Set("c1", Case("status").When("1", "2").When("2", "1")).
 		Set("c2", Case().When("a = 2", Expr("?", "foo")).When("a = 3", Expr("?", "bar"))).
 		Set("c3", Select("a").From("b")).
+		PreWhere("pwc1 = ?", 1).
 		Where("d = ?", 3).
+		PreWhere("pwc2 = 2").
+		PreWhere(Eq{"pwc3": 3}).
 		OrderBy("e").
 		Limit(4).
 		Offset(5).
@@ -30,12 +33,13 @@ func TestUpdateBuilderToSql(t *testing.T) {
 			"c1 = CASE status WHEN 1 THEN 2 WHEN 2 THEN 1 END, " +
 			"c2 = CASE WHEN a = 2 THEN ? WHEN a = 3 THEN ? END, " +
 			"c3 = (SELECT a FROM b) " +
+			"PREWHERE pwc1 = ? AND pwc2 = 2 AND pwc3 = ? " +
 			"WHERE d = ? " +
 			"ORDER BY e LIMIT 4 OFFSET 5 " +
 			"RETURNING ?"
 	assert.Equal(t, expectedSql, sql)
 
-	expectedArgs := []interface{}{0, 1, 2, "foo", "bar", 3, 6}
+	expectedArgs := []interface{}{0, 1, 2, "foo", "bar", 1, 3, 3, 6}
 	assert.Equal(t, expectedArgs, args)
 }
 

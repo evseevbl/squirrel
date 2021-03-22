@@ -27,6 +27,7 @@ func TestSelectBuilderToSql(t *testing.T) {
 		RightJoin("j4").
 		InnerJoin("j5").
 		CrossJoin("j6").
+		PreWhere(Eq{"xxx_prewhere": []string{"pw1", "pw2"}}).
 		Where("f = ?", 4).
 		Where(Eq{"g": 5}).
 		Where(map[string]interface{}{"h": 6}).
@@ -50,12 +51,13 @@ func TestSelectBuilderToSql(t *testing.T) {
 			"(SELECT aa, bb FROM dd) AS subq " +
 			"FROM e " +
 			"CROSS JOIN j1 JOIN j2 LEFT JOIN j3 RIGHT JOIN j4 INNER JOIN j5 CROSS JOIN j6 " +
+			"PREWHERE xxx_prewhere IN (?,?) " +
 			"WHERE f = ? AND g = ? AND h = ? AND i IN (?,?,?) AND (j = ? OR (k = ? AND true)) " +
 			"GROUP BY l HAVING m = n ORDER BY ? DESC, o ASC, p DESC LIMIT 12 OFFSET 13 " +
 			"FETCH FIRST ? ROWS ONLY"
 	assert.Equal(t, expectedSql, sql)
 
-	expectedArgs := []interface{}{0, 1, 2, 3, 100, 101, 102, 103, 4, 5, 6, 7, 8, 9, 10, 11, 1, 14}
+	expectedArgs := []interface{}{0, 1, 2, 3, 100, 101, 102, 103, "pw1", "pw2", 4, 5, 6, 7, 8, 9, 10, 11, 1, 14}
 	assert.Equal(t, expectedArgs, args)
 }
 

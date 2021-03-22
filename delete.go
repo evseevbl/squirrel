@@ -15,6 +15,7 @@ type deleteData struct {
 	Prefixes          []Sqlizer
 	From              string
 	WhereParts        []Sqlizer
+	PreWhereParts     []Sqlizer
 	OrderBys          []string
 	Limit             string
 	Offset            string
@@ -47,6 +48,14 @@ func (d *deleteData) ToSql() (sqlStr string, args []interface{}, err error) {
 
 	sql.WriteString("DELETE FROM ")
 	sql.WriteString(d.From)
+
+	if len(d.WhereParts) > 0 {
+		sql.WriteString(" PREWHERE ")
+		args, err = appendToSql(d.PreWhereParts, sql, " AND ", args)
+		if err != nil {
+			return
+		}
+	}
 
 	if len(d.WhereParts) > 0 {
 		sql.WriteString(" WHERE ")
@@ -141,6 +150,10 @@ func (b DeleteBuilder) From(from string) DeleteBuilder {
 // See SelectBuilder.Where for more information.
 func (b DeleteBuilder) Where(pred interface{}, args ...interface{}) DeleteBuilder {
 	return builder.Append(b, "WhereParts", newWherePart(pred, args...)).(DeleteBuilder)
+}
+
+func (b DeleteBuilder) PreWhere(pred interface{}, args ...interface{}) DeleteBuilder {
+	return builder.Append(b, "PreWhereParts", newWherePart(pred, args...)).(DeleteBuilder)
 }
 
 // OrderBy adds ORDER BY expressions to the query.
